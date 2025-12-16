@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>幸運大轉盤</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            font-family: Arial, sans-serif;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+        }
+
+        /* 轉盤主體 */
+        #canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); /* 平滑停止動畫 */
+        }
+
+        /* 指針 */
+        .pointer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 40px solid #ff4757;
+            z-index: 10;
+        }
+
+        .spin-btn {
+            margin-top: 30px;
+            padding: 15px 40px;
+            font-size: 20px;
+            cursor: pointer;
+            background-color: #2ed573;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            transition: 0.3s;
+        }
+
+        .spin-btn:hover { background-color: #26af5f; }
+        .spin-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <div class="wheel-container">
+        <div class="pointer"></div>
+        <canvas id="canvas" width="400" height="400"></canvas>
+    </div>
+
+    <button class="spin-btn" onclick="spin()">開始抽獎！</button>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const prizes = ["獎品 1", "獎品 2", "獎品 3", "獎品 4", "獎品 5", "獎品 6"];
+        const colors = ["#ff9f43", "#ee5253", "#0abde3", "#10ac84", "#5f27cd", "#ff9ff3"];
+        
+        let currentRotation = 0;
+        let isSpinning = false;
+
+        // 繪製轉盤
+        function drawWheel() {
+            const arcSize = (2 * Math.PI) / prizes.length;
+            
+            prizes.forEach((prize, i) => {
+                const angle = i * arcSize;
+                
+                // 畫扇形
+                ctx.beginPath();
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.moveTo(200, 200);
+                ctx.arc(200, 200, 200, angle, angle + arcSize);
+                ctx.fill();
+
+                // 畫文字
+                ctx.save();
+                ctx.translate(200, 200);
+                ctx.rotate(angle + arcSize / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "white";
+                ctx.font = "bold 18px Arial";
+                ctx.fillText(prize, 180, 10);
+                ctx.restore();
+            });
+        }
+
+        function spin() {
+            if (isSpinning) return;
+            
+            isSpinning = true;
+            document.querySelector('.spin-btn').disabled = true;
+
+            // 隨機旋轉度數（至少轉 5 圈 + 隨機角度）
+            const randomExtra = Math.floor(Math.random() * 360);
+            currentRotation += (360 * 5) + randomExtra;
+            
+            canvas.style.transform = `rotate(${currentRotation}deg)`;
+
+            // 動畫結束後處理
+            setTimeout(() => {
+                isSpinning = false;
+                document.querySelector('.spin-btn').disabled = false;
+                
+                // 計算抽中哪個獎品（指針在正上方，即 270 度位置）
+                const actualDegree = currentRotation % 360;
+                const prizeIndex = Math.floor((360 - actualDegree % 360) / (360 / prizes.length)) % prizes.length;
+                alert("恭喜獲得：" + prizes[prizeIndex]);
+            }, 4000);
+        }
+
+        drawWheel();
+    </script>
+</body>
+</html>
